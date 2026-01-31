@@ -338,28 +338,6 @@
             transform: none;
         }
 
-        .export-btn {
-            background: var(--surface);
-            border: 2px solid var(--accent);
-            color: var(--accent);
-            padding: 0.75rem 2rem;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.875rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-top: 2rem;
-            width: 100%;
-        }
-
-        .export-btn:hover {
-            background: var(--accent);
-            color: var(--bg);
-            transform: translateY(-2px);
-        }
-
         .results-container {
             display: flex;
             flex-direction: column;
@@ -534,15 +512,13 @@
 
         <div id="results-section" class="section">
             <div class="voting-area">
-                <h2>Current Results</h2>
+                <h2>Results Summary</h2>
                 <p class="instruction">
                     Results are calculated using a weighted scoring system: 1st choice = 6 points, 
-                    2nd = 5 points, down to 6th = 1 point.
+                    2nd = 5 points, down to 6th = 1 point. Check the Google Sheet for detailed voting data.
                 </p>
                 
                 <div id="results-container" class="results-container"></div>
-                
-                <button class="export-btn" onclick="exportToCSV()">Export Results to CSV</button>
             </div>
         </div>
     </div>
@@ -840,59 +816,6 @@
                 document.querySelector('.toggle-btn:last-child').classList.add('active');
                 document.getElementById('results-section').classList.add('active');
                 loadResults();
-            }
-        }
-
-        function exportToCSV() {
-            try {
-                const votesData = localStorage.getItem('all-votes');
-                
-                if (!votesData) {
-                    alert('No votes to export yet!');
-                    return;
-                }
-                
-                const allVotes = JSON.parse(votesData);
-                const results = Object.values(allVotes).sort((a, b) => b.totalPoints - a.totalPoints);
-                
-                // Create CSV header
-                let csv = 'Rank,Option Name,Price,Total Points,Number of Votes,Average Rank,1st Choice,2nd Choice,3rd Choice,4th Choice,5th Choice,6th Choice,Link\n';
-                
-                // Add each result as a row
-                results.forEach((result, index) => {
-                    const avgRank = result.votes > 0 ? (7 - result.totalPoints / result.votes).toFixed(2) : 'N/A';
-                    const row = [
-                        index + 1,
-                        `"${result.name}"`,
-                        result.price,
-                        result.totalPoints,
-                        result.votes,
-                        avgRank,
-                        result.rankings[1],
-                        result.rankings[2],
-                        result.rankings[3],
-                        result.rankings[4],
-                        result.rankings[5],
-                        result.rankings[6],
-                        `"${result.link}"`
-                    ].join(',');
-                    csv += row + '\n';
-                });
-                
-                // Create download link
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'portugal-voting-results.csv';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-                
-            } catch (error) {
-                console.error('Error exporting CSV:', error);
-                alert('Error exporting results. Please try again.');
             }
         }
 
