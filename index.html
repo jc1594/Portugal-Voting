@@ -152,25 +152,12 @@
             display: flex;
             align-items: flex-start;
             gap: 1rem;
-            cursor: move;
             transition: all 0.3s ease;
             position: relative;
         }
 
         .rank-item:hover {
             border-color: var(--accent);
-            transform: translateX(8px);
-        }
-
-        .rank-item.dragging {
-            opacity: 0.5;
-            transform: rotate(2deg);
-        }
-
-        .rank-item.drag-over {
-            border-style: dashed;
-            border-color: var(--accent);
-            background: var(--bg);
         }
 
         .rank-number {
@@ -290,14 +277,38 @@
             font-weight: 600;
         }
 
-        .drag-handle {
-            color: var(--text-dim);
-            font-size: 1.5rem;
-            cursor: grab;
+        .rank-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            flex-shrink: 0;
         }
 
-        .drag-handle:active {
-            cursor: grabbing;
+        .rank-btn {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            color: var(--text);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .rank-btn:hover:not(:disabled) {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg);
+            transform: scale(1.1);
+        }
+
+        .rank-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
         }
 
         .submit-btn {
@@ -489,7 +500,7 @@
             <div class="voting-area">
                 <h2>Rank Your Preferences</h2>
                 <p class="instruction">
-                    Drag and drop the options below to rank them from most preferred (1) to least preferred (6). 
+                    Use the arrow buttons to move options up or down to rank them from most preferred (1) to least preferred (6). 
                     Your top choice gets the most points.
                 </p>
                 
@@ -586,11 +597,13 @@
             currentRanking.forEach((option, index) => {
                 const item = document.createElement('div');
                 item.className = 'rank-item';
-                item.draggable = true;
                 item.dataset.id = option.id;
                 
                 const prosHTML = option.pros.map(pro => `<li>${pro}</li>`).join('');
                 const consHTML = option.cons.map(con => `<li>${con}</li>`).join('');
+                
+                const isFirst = index === 0;
+                const isLast = index === currentRanking.length - 1;
                 
                 item.innerHTML = `
                     <span class="rank-number">${index + 1}</span>
@@ -613,18 +626,32 @@
                             </div>
                         </div>
                     </div>
-                    <span class="drag-handle">⋮⋮</span>
+                    <div class="rank-controls">
+                        <button class="rank-btn" onclick="moveUp(${index})" ${isFirst ? 'disabled' : ''}>↑</button>
+                        <button class="rank-btn" onclick="moveDown(${index})" ${isLast ? 'disabled' : ''}>↓</button>
+                    </div>
                 `;
-                
-                item.addEventListener('dragstart', handleDragStart);
-                item.addEventListener('dragend', handleDragEnd);
-                item.addEventListener('dragover', handleDragOver);
-                item.addEventListener('drop', handleDrop);
-                item.addEventListener('dragenter', handleDragEnter);
-                item.addEventListener('dragleave', handleDragLeave);
                 
                 rankList.appendChild(item);
             });
+        }
+
+        function moveUp(index) {
+            if (index > 0) {
+                const temp = currentRanking[index];
+                currentRanking[index] = currentRanking[index - 1];
+                currentRanking[index - 1] = temp;
+                renderRankList();
+            }
+        }
+
+        function moveDown(index) {
+            if (index < currentRanking.length - 1) {
+                const temp = currentRanking[index];
+                currentRanking[index] = currentRanking[index + 1];
+                currentRanking[index + 1] = temp;
+                renderRankList();
+            }
         }
 
         function handleDragStart(e) {
