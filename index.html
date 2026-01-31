@@ -576,13 +576,12 @@
         ];
 
         let currentRanking = [...options];
-        let draggedElement = null;
 
         async function initializeVoting() {
             try {
-                const savedRanking = await window.storage.get('user-ranking');
+                const savedRanking = localStorage.getItem('user-ranking');
                 if (savedRanking) {
-                    currentRanking = JSON.parse(savedRanking.value);
+                    currentRanking = JSON.parse(savedRanking);
                 }
             } catch (error) {
                 console.log('No saved ranking found, using default order');
@@ -654,83 +653,20 @@
             }
         }
 
-        function handleDragStart(e) {
-            draggedElement = this;
-            this.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/html', this.innerHTML);
-        }
-
-        function handleDragEnd(e) {
-            this.classList.remove('dragging');
-            document.querySelectorAll('.rank-item').forEach(item => {
-                item.classList.remove('drag-over');
-            });
-        }
-
-        function handleDragOver(e) {
-            if (e.preventDefault) {
-                e.preventDefault();
-            }
-            e.dataTransfer.dropEffect = 'move';
-            return false;
-        }
-
-        function handleDragEnter(e) {
-            if (this !== draggedElement) {
-                this.classList.add('drag-over');
-            }
-        }
-
-        function handleDragLeave(e) {
-            this.classList.remove('drag-over');
-        }
-
-        function handleDrop(e) {
-            if (e.stopPropagation) {
-                e.stopPropagation();
-            }
-            
-            if (draggedElement !== this) {
-                const draggedId = parseInt(draggedElement.dataset.id);
-                const targetId = parseInt(this.dataset.id);
-                
-                const draggedIndex = currentRanking.findIndex(opt => opt.id === draggedId);
-                const targetIndex = currentRanking.findIndex(opt => opt.id === targetId);
-                
-                const [removed] = currentRanking.splice(draggedIndex, 1);
-                currentRanking.splice(targetIndex, 0, removed);
-                
-                renderRankList();
-            }
-            
-            return false;
-        }
-
         async function submitVote() {
             try {
                 // Save user's ranking
-                await window.storage.set('user-ranking', JSON.stringify(currentRanking));
+                localStorage.setItem('user-ranking', JSON.stringify(currentRanking));
                 
                 // Check if user has already voted
-                let hasVoted = false;
-                try {
-                    const voted = await window.storage.get('has-voted');
-                    hasVoted = voted && voted.value === 'true';
-                } catch (error) {
-                    // User hasn't voted yet
-                }
+                const hasVoted = localStorage.getItem('has-voted') === 'true';
                 
                 if (!hasVoted) {
                     // Get current votes
                     let allVotes = {};
-                    try {
-                        const votesData = await window.storage.get('all-votes', true);
-                        if (votesData) {
-                            allVotes = JSON.parse(votesData.value);
-                        }
-                    } catch (error) {
-                        console.log('No existing votes found, starting fresh');
+                    const votesData = localStorage.getItem('all-votes');
+                    if (votesData) {
+                        allVotes = JSON.parse(votesData);
                     }
                     
                     // Add this vote with weighted scoring
@@ -752,16 +688,16 @@
                     });
                     
                     // Save votes
-                    await window.storage.set('all-votes', JSON.stringify(allVotes), true);
-                    await window.storage.set('has-voted', 'true');
+                    localStorage.setItem('all-votes', JSON.stringify(allVotes));
+                    localStorage.setItem('has-voted', 'true');
                     
                     // Show confirmation
                     showConfirmation();
+                    switchView('results');
                 } else {
                     alert('You have already submitted a vote! Your preferences have been saved, but your vote was not counted again.');
+                    switchView('results');
                 }
-                
-                switchView('results');
             } catch (error) {
                 console.error('Error submitting vote:', error);
                 alert('There was an error submitting your vote. Please try again.');
@@ -784,14 +720,14 @@
             const container = document.getElementById('results-container');
             
             try {
-                const votesData = await window.storage.get('all-votes', true);
+                const votesData = localStorage.getItem('all-votes');
                 
                 if (!votesData) {
                     container.innerHTML = '<p class="instruction">No votes have been cast yet. Be the first to vote!</p>';
                     return;
                 }
                 
-                const allVotes = JSON.parse(votesData.value);
+                const allVotes = JSON.parse(votesData);
                 const results = Object.values(allVotes).sort((a, b) => b.totalPoints - a.totalPoints);
                 
                 const maxPoints = results[0]?.totalPoints || 1;
