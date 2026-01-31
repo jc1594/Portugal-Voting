@@ -338,6 +338,28 @@
             transform: none;
         }
 
+        .export-btn {
+            background: var(--surface);
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            padding: 0.75rem 2rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 2rem;
+            width: 100%;
+        }
+
+        .export-btn:hover {
+            background: var(--accent);
+            color: var(--bg);
+            transform: translateY(-2px);
+        }
+
         .results-container {
             display: flex;
             flex-direction: column;
@@ -519,11 +541,18 @@
                 </p>
                 
                 <div id="results-container" class="results-container"></div>
+                
+                <button class="export-btn" onclick="exportToCSV()">Export Results to CSV</button>
             </div>
         </div>
     </div>
 
     <script>
+        // ===== CONFIGURATION =====
+        // IMPORTANT: Replace this with your Google Apps Script Web App URL
+        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwnuw4AqkwTii_KDA4XIGpRX4brFOo_YG43gulmglWlB2_Q-T0KbJMlHSi2zX7r0dhp/exec';
+        // ========================
+        
         const options = [
             { 
                 id: 1, 
@@ -576,6 +605,16 @@
         ];
 
         let currentRanking = [...options];
+
+        // Generate a unique voter ID for this browser
+        function getVoterId() {
+            let voterId = localStorage.getItem('voter-id');
+            if (!voterId) {
+                voterId = 'voter_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('voter-id', voterId);
+            }
+            return voterId;
+        }
 
         async function initializeVoting() {
             try {
@@ -655,52 +694,82 @@
 
         async function submitVote() {
             try {
-                // Save user's ranking
+                // Check if Google Sheets URL is configured
+                if (GOOGLE_SHEET_URL === 'PASTE_YOUR_WEB_APP_URL_HERE') {
+                    alert('Google Sheets integration not configured yet. Please add your Web App URL to the code.');
+                    return;
+                }
+
+                // Save user's ranking locally
                 localStorage.setItem('user-ranking', JSON.stringify(currentRanking));
                 
                 // Check if user has already voted
                 const hasVoted = localStorage.getItem('has-voted') === 'true';
                 
-                if (!hasVoted) {
-                    // Get current votes
-                    let allVotes = {};
-                    const votesData = localStorage.getItem('all-votes');
-                    if (votesData) {
-                        allVotes = JSON.parse(votesData);
-                    }
-                    
-                    // Add this vote with weighted scoring
-                    currentRanking.forEach((option, index) => {
-                        const points = 6 - index; // 1st place = 6 points, 6th place = 1 point
-                        if (!allVotes[option.id]) {
-                            allVotes[option.id] = { 
-                                name: option.name,
-                                price: option.price,
-                                link: option.link,
-                                totalPoints: 0,
-                                votes: 0,
-                                rankings: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
-                            };
-                        }
-                        allVotes[option.id].totalPoints += points;
-                        allVotes[option.id].votes += 1;
-                        allVotes[option.id].rankings[index + 1] += 1;
-                    });
-                    
-                    // Save votes
-                    localStorage.setItem('all-votes', JSON.stringify(allVotes));
-                    localStorage.setItem('has-voted', 'true');
-                    
-                    // Show confirmation
-                    showConfirmation();
-                    switchView('results');
-                } else {
+                if (hasVoted) {
                     alert('You have already submitted a vote! Your preferences have been saved, but your vote was not counted again.');
                     switchView('results');
+                    return;
                 }
+
+                // Prepare data for Google Sheets
+                const voterId = getVoterId();
+                const rankings = currentRanking.map((option, index) => ({
+                    name: option.name,
+                    price: option.price,
+                    link: option.link,
+                    rank: index + 1,
+                    points: 6 - index
+                }));
+
+                // Send to Google Sheets
+                const response = await fetch(GOOGLE_SHEET_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Required for Google Apps Script
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        voterId: voterId,
+                        rankings: rankings
+                    })
+                });
+
+                // Also save locally for viewing results
+                let allVotes = {};
+                const votesData = localStorage.getItem('all-votes');
+                if (votesData) {
+                    allVotes = JSON.parse(votesData);
+                }
+                
+                // Add this vote with weighted scoring
+                currentRanking.forEach((option, index) => {
+                    const points = 6 - index;
+                    if (!allVotes[option.id]) {
+                        allVotes[option.id] = { 
+                            name: option.name,
+                            price: option.price,
+                            link: option.link,
+                            totalPoints: 0,
+                            votes: 0,
+                            rankings: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
+                        };
+                    }
+                    allVotes[option.id].totalPoints += points;
+                    allVotes[option.id].votes += 1;
+                    allVotes[option.id].rankings[index + 1] += 1;
+                });
+                
+                localStorage.setItem('all-votes', JSON.stringify(allVotes));
+                localStorage.setItem('has-voted', 'true');
+                
+                // Show confirmation
+                showConfirmation();
+                switchView('results');
+                
             } catch (error) {
                 console.error('Error submitting vote:', error);
-                alert('There was an error submitting your vote. Please try again.');
+                alert('There was an error submitting your vote to Google Sheets. Please check your internet connection and try again.');
             }
         }
 
@@ -771,6 +840,59 @@
                 document.querySelector('.toggle-btn:last-child').classList.add('active');
                 document.getElementById('results-section').classList.add('active');
                 loadResults();
+            }
+        }
+
+        function exportToCSV() {
+            try {
+                const votesData = localStorage.getItem('all-votes');
+                
+                if (!votesData) {
+                    alert('No votes to export yet!');
+                    return;
+                }
+                
+                const allVotes = JSON.parse(votesData);
+                const results = Object.values(allVotes).sort((a, b) => b.totalPoints - a.totalPoints);
+                
+                // Create CSV header
+                let csv = 'Rank,Option Name,Price,Total Points,Number of Votes,Average Rank,1st Choice,2nd Choice,3rd Choice,4th Choice,5th Choice,6th Choice,Link\n';
+                
+                // Add each result as a row
+                results.forEach((result, index) => {
+                    const avgRank = result.votes > 0 ? (7 - result.totalPoints / result.votes).toFixed(2) : 'N/A';
+                    const row = [
+                        index + 1,
+                        `"${result.name}"`,
+                        result.price,
+                        result.totalPoints,
+                        result.votes,
+                        avgRank,
+                        result.rankings[1],
+                        result.rankings[2],
+                        result.rankings[3],
+                        result.rankings[4],
+                        result.rankings[5],
+                        result.rankings[6],
+                        `"${result.link}"`
+                    ].join(',');
+                    csv += row + '\n';
+                });
+                
+                // Create download link
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'portugal-voting-results.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+            } catch (error) {
+                console.error('Error exporting CSV:', error);
+                alert('Error exporting results. Please try again.');
             }
         }
 
