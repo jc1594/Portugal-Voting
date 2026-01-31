@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portugal Accommodation Voting</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f0e0d;
+            --surface: #1a1816;
+            --surface-elevated: #252220;
+            --text: #e8e6e3;
+            --text-dim: #9a9490;
+            --accent: #ff6b35;
+            --accent-dim: #c44d23;
+            --border: #3a3633;
+            --success: #4caf50;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 900;
+            color: var(--text);
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+            line-height: 1;
+        }
+
+        .subtitle {
+            font-size: 0.875rem;
+            color: var(--text-dim);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 3rem;
+            animation: fadeIn 1s ease-out 0.2s both;
+        }
+
+        .toggle-btn {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            color: var(--text-dim);
+            padding: 0.75rem 2rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .toggle-btn:hover {
+            border-color: var(--accent);
+            color: var(--text);
+            transform: translateY(-2px);
+        }
+
+        .toggle-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg);
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .voting-area {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+            animation: slideUp 0.6s ease-out 0.3s both;
+        }
+
+        .voting-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-dim));
+        }
+
+        h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+        }
+
+        .instruction {
+            color: var(--text-dim);
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .rank-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            min-height: 400px;
+        }
+
+        .rank-item {
+            background: var(--surface-elevated);
+            border: 2px solid var(--border);
+            padding: 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            cursor: move;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .rank-item:hover {
+            border-color: var(--accent);
+            transform: translateX(8px);
+        }
+
+        .rank-item.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+        }
+
+        .rank-item.drag-over {
+            border-style: dashed;
+            border-color: var(--accent);
+            background: var(--bg);
+        }
+
+        .rank-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--accent);
+            min-width: 50px;
+            text-align: center;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .rank-content {
+            flex: 1;
+        }
+
+        .option-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .option-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .option-price {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .option-link {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.75rem;
+            transition: color 0.3s ease;
+            margin-bottom: 0.75rem;
+            display: inline-block;
+        }
+
+        .option-link:hover {
+            color: var(--accent);
+        }
+
+        .pros-cons-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 0.75rem;
+        }
+
+        .pros-section, .cons-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .section-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .pros-section .section-label {
+            color: var(--success);
+        }
+
+        .cons-section .section-label {
+            color: var(--accent);
+        }
+
+        .pros-list, .cons-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+        }
+
+        .pros-list li, .cons-list li {
+            font-size: 0.8125rem;
+            color: var(--text-dim);
+            line-height: 1.4;
+            padding-left: 1.25rem;
+            position: relative;
+        }
+
+        .pros-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .cons-list li::before {
+            content: '✗';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .drag-handle {
+            color: var(--text-dim);
+            font-size: 1.5rem;
+            cursor: grab;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .submit-btn {
+            background: var(--accent);
+            border: none;
+            color: var(--bg);
+            padding: 1rem 3rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            width: 100%;
+        }
+
+        .submit-btn:hover {
+            background: var(--text);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255, 107, 53, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .result-item {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            padding: 1.5rem;
+            animation: slideUp 0.6s ease-out both;
+        }
+
+        .result-item:nth-child(1) { animation-delay: 0.1s; }
+        .result-item:nth-child(2) { animation-delay: 0.2s; }
+        .result-item:nth-child(3) { animation-delay: 0.3s; }
+        .result-item:nth-child(4) { animation-delay: 0.4s; }
+        .result-item:nth-child(5) { animation-delay: 0.5s; }
+        .result-item:nth-child(6) { animation-delay: 0.6s; }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .result-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .result-score {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--accent);
+        }
+
+        .result-bar-container {
+            background: var(--bg);
+            height: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-dim));
+            transition: width 1s ease-out;
+        }
+
+        .result-details {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .confirmation {
+            background: var(--success);
+            color: var(--bg);
+            padding: 1rem;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .voting-area {
+                padding: 1.5rem;
+            }
+
+            .rank-number {
+                font-size: 2rem;
+                min-width: 40px;
+            }
+
+            .result-details {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .pros-cons-container {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .option-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Portugal Stay</h1>
+            <p class="subtitle">Rank Your Preferences</p>
+        </header>
+
+        <div class="view-toggle">
+            <button class="toggle-btn active" onclick="switchView('vote')">Vote</button>
+            <button class="toggle-btn" onclick="switchView('results')">Results</button>
+        </div>
+
+        <div id="vote-section" class="section active">
+            <div class="voting-area">
+                <h2>Rank Your Preferences</h2>
+                <p class="instruction">
+                    Drag and drop the options below to rank them from most preferred (1) to least preferred (6). 
+                    Your top choice gets the most points.
+                </p>
+                
+                <div id="rank-list" class="rank-list"></div>
+                
+                <button class="submit-btn" onclick="submitVote()">Submit Vote</button>
+            </div>
+        </div>
+
+        <div id="results-section" class="section">
+            <div class="voting-area">
+                <h2>Current Results</h2>
+                <p class="instruction">
+                    Results are calculated using a weighted scoring system: 1st choice = 6 points, 
+                    2nd = 5 points, down to 6th = 1 point.
+                </p>
+                
+                <div id="results-container" class="results-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const options = [
+            { 
+                id: 1, 
+                name: 'Vale da Lapa Villa',
+                price: '$2000',
+                link: 'https://www.valedalapa.com/accommodations/3-bedroom-villa',
+                pros: ['3 Beds (2 Q, 1 Twin/Twin) + 3 Baths', 'Private Pool', 'Resort Access (Pool/Gym/Spa)', 'On-site restaurant/bar'],
+                cons: ['Private, but still on a resort', 'Not walkable to beach/town (5 minute drive)']
+            },
+            { 
+                id: 2, 
+                name: 'Pine Cliffs Gardens',
+                price: '$2016',
+                link: 'https://www.pinecliffs.com/en/accommodation/pine-cliffs-gardens/',
+                pros: ['3 Beds (2 Doubles, 1 Twin/Twin) + 2 Baths', 'Resort Access (Pool/Gym/Spa/private beach)', 'On-site restaurant/bar'],
+                cons: ['No private pool', 'Large hotel/resort-feel', 'Further from Carvoeiro (hikes/caves), closer to Albufeira (Reddit says this area is for rich British frat boys)']
+            },
+            { 
+                id: 3, 
+                name: 'Carvoeiro Beach House',
+                price: '$2255',
+                link: 'https://www.airbnb.com/rooms/35857686?adults=6&check_in=2026-05-08&check_out=2026-05-12&location=Albufeira%2C%20Portugal&search_mode=regular_search&source_impression_id=p3_1769613777_P335yENz6zWHDsJI&previous_page_section_name=1001&federated_search_id=851f8e7b-a05c-45db-b92e-2221f9574dba&guests=1',
+                pros: ['3 Beds (2 Doubles, 1 Twin/Twin) + 2.5 Baths', 'Large pool & outdoor dining area', '5 minute walk to beach and downtown Carvoeiro'],
+                cons: ['Slightly more expensive option']
+            },
+            { 
+                id: 4, 
+                name: '4-Bedroom Villa',
+                price: '$2105',
+                link: 'https://www.airbnb.com/rooms/1446570251935007546?adults=6&check_in=2026-05-08&check_out=2026-05-12&guests=6&search_mode=regular_search&amenities%5B%5D=7&photo_id=2219180394&source_impression_id=p3_1769801493_P39FNDjnGk46ptBT&previous_page_section_name=1000&federated_search_id=0616338d-b083-4965-b5e2-670a9df47796',
+                pros: ['4 Beds (2 Kings, 2 Twin/Twin) + 3.5 Baths'],
+                cons: ['Slightly smaller pool/outdoor area', 'Not walkable (10 minutes drive to beach/town)']
+            },
+            { 
+                id: 5, 
+                name: 'Budget-Friendly Walkable Villa',
+                price: '$1520',
+                link: 'https://www.airbnb.com/rooms/1039784442895588142?adults=6&check_in=2026-05-08&check_out=2026-05-12&guests=6&search_mode=regular_search&amenities%5B%5D=7&source_impression_id=p3_1769801493_P3bGn4pbdiWAdfxs&previous_page_section_name=1000&federated_search_id=0616338d-b083-4965-b5e2-670a9df47796&modal=DESCRIPTION',
+                pros: ['3 Beds (1 King, 1 Double, 1 Twin/Twin) + 3 Baths', 'Walkable to beach/town', 'Cheaper'],
+                cons: ['Outdoor area isn\'t as nice as some of the others']
+            },
+            { 
+                id: 6, 
+                name: 'Traditional Portugal Villa',
+                price: '$1639',
+                link: 'https://www.airbnb.com/rooms/1413341435666364016?adults=6&check_in=2026-05-08&check_out=2026-05-12&guests=6&search_mode=regular_search&amenities%5B%5D=7&photo_id=2379501057&source_impression_id=p3_1769801142_P3TRO81M2k_CLBcF&previous_page_section_name=1000&federated_search_id=c4677128-dce1-4c09-8d4b-d7d64c65a9a4',
+                pros: ['3 Beds (2 Doubles, 2 Twin/Twin) + 3 Baths', 'Traditional Portugal "feel"'],
+                cons: ['Smaller pool/outdoor area', '10 minute drive to beach', '25 minutes to Carvoeiro beaches/town']
+            }
+        ];
+
+        let currentRanking = [...options];
+        let draggedElement = null;
+
+        async function initializeVoting() {
+            try {
+                const savedRanking = await window.storage.get('user-ranking');
+                if (savedRanking) {
+                    currentRanking = JSON.parse(savedRanking.value);
+                }
+            } catch (error) {
+                console.log('No saved ranking found, using default order');
+            }
+            renderRankList();
+        }
+
+        function renderRankList() {
+            const rankList = document.getElementById('rank-list');
+            rankList.innerHTML = '';
+            
+            currentRanking.forEach((option, index) => {
+                const item = document.createElement('div');
+                item.className = 'rank-item';
+                item.draggable = true;
+                item.dataset.id = option.id;
+                
+                const prosHTML = option.pros.map(pro => `<li>${pro}</li>`).join('');
+                const consHTML = option.cons.map(con => `<li>${con}</li>`).join('');
+                
+                item.innerHTML = `
+                    <span class="rank-number">${index + 1}</span>
+                    <div class="rank-content">
+                        <div class="option-header">
+                            <div class="option-name">${option.name}</div>
+                            <div class="option-price">${option.price}</div>
+                        </div>
+                        <a href="${option.link}" target="_blank" class="option-link" onclick="event.stopPropagation();">
+                            ${option.link} ↗
+                        </a>
+                        <div class="pros-cons-container">
+                            <div class="pros-section">
+                                <div class="section-label">Pros</div>
+                                <ul class="pros-list">${prosHTML}</ul>
+                            </div>
+                            <div class="cons-section">
+                                <div class="section-label">Cons</div>
+                                <ul class="cons-list">${consHTML}</ul>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="drag-handle">⋮⋮</span>
+                `;
+                
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragenter', handleDragEnter);
+                item.addEventListener('dragleave', handleDragLeave);
+                
+                rankList.appendChild(item);
+            });
+        }
+
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            document.querySelectorAll('.rank-item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            if (this !== draggedElement) {
+                this.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            if (draggedElement !== this) {
+                const draggedId = parseInt(draggedElement.dataset.id);
+                const targetId = parseInt(this.dataset.id);
+                
+                const draggedIndex = currentRanking.findIndex(opt => opt.id === draggedId);
+                const targetIndex = currentRanking.findIndex(opt => opt.id === targetId);
+                
+                const [removed] = currentRanking.splice(draggedIndex, 1);
+                currentRanking.splice(targetIndex, 0, removed);
+                
+                renderRankList();
+            }
+            
+            return false;
+        }
+
+        async function submitVote() {
+            try {
+                // Save user's ranking
+                await window.storage.set('user-ranking', JSON.stringify(currentRanking));
+                
+                // Check if user has already voted
+                let hasVoted = false;
+                try {
+                    const voted = await window.storage.get('has-voted');
+                    hasVoted = voted && voted.value === 'true';
+                } catch (error) {
+                    // User hasn't voted yet
+                }
+                
+                if (!hasVoted) {
+                    // Get current votes
+                    let allVotes = {};
+                    try {
+                        const votesData = await window.storage.get('all-votes', true);
+                        if (votesData) {
+                            allVotes = JSON.parse(votesData.value);
+                        }
+                    } catch (error) {
+                        console.log('No existing votes found, starting fresh');
+                    }
+                    
+                    // Add this vote with weighted scoring
+                    currentRanking.forEach((option, index) => {
+                        const points = 6 - index; // 1st place = 6 points, 6th place = 1 point
+                        if (!allVotes[option.id]) {
+                            allVotes[option.id] = { 
+                                name: option.name,
+                                price: option.price,
+                                link: option.link,
+                                totalPoints: 0,
+                                votes: 0,
+                                rankings: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
+                            };
+                        }
+                        allVotes[option.id].totalPoints += points;
+                        allVotes[option.id].votes += 1;
+                        allVotes[option.id].rankings[index + 1] += 1;
+                    });
+                    
+                    // Save votes
+                    await window.storage.set('all-votes', JSON.stringify(allVotes), true);
+                    await window.storage.set('has-voted', 'true');
+                    
+                    // Show confirmation
+                    showConfirmation();
+                } else {
+                    alert('You have already submitted a vote! Your preferences have been saved, but your vote was not counted again.');
+                }
+                
+                switchView('results');
+            } catch (error) {
+                console.error('Error submitting vote:', error);
+                alert('There was an error submitting your vote. Please try again.');
+            }
+        }
+
+        function showConfirmation() {
+            const confirmation = document.createElement('div');
+            confirmation.className = 'confirmation';
+            confirmation.textContent = 'Vote submitted successfully!';
+            document.querySelector('#results-section .voting-area').prepend(confirmation);
+            
+            setTimeout(() => {
+                confirmation.style.animation = 'fadeIn 0.5s ease-out reverse';
+                setTimeout(() => confirmation.remove(), 500);
+            }, 3000);
+        }
+
+        async function loadResults() {
+            const container = document.getElementById('results-container');
+            
+            try {
+                const votesData = await window.storage.get('all-votes', true);
+                
+                if (!votesData) {
+                    container.innerHTML = '<p class="instruction">No votes have been cast yet. Be the first to vote!</p>';
+                    return;
+                }
+                
+                const allVotes = JSON.parse(votesData.value);
+                const results = Object.values(allVotes).sort((a, b) => b.totalPoints - a.totalPoints);
+                
+                const maxPoints = results[0]?.totalPoints || 1;
+                
+                container.innerHTML = '';
+                results.forEach((result, index) => {
+                    const percentage = (result.totalPoints / maxPoints) * 100;
+                    
+                    const item = document.createElement('div');
+                    item.className = 'result-item';
+                    item.innerHTML = `
+                        <div class="result-header">
+                            <div class="result-name">${result.name}</div>
+                            <div class="result-score">${result.totalPoints}</div>
+                        </div>
+                        <div class="result-bar-container">
+                            <div class="result-bar" style="width: ${percentage}%"></div>
+                        </div>
+                        <div class="result-details">
+                            <span>Votes: ${result.votes}</span>
+                            <span>Avg Rank: ${(result.votes > 0 ? (7 - result.totalPoints / result.votes).toFixed(1) : 'N/A')}</span>
+                            <span>1st Choice: ${result.rankings[1]} times</span>
+                        </div>
+                    `;
+                    container.appendChild(item);
+                });
+            } catch (error) {
+                console.log('No votes found:', error);
+                container.innerHTML = '<p class="instruction">No votes have been cast yet. Be the first to vote!</p>';
+            }
+        }
+
+        function switchView(view) {
+            document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+            
+            if (view === 'vote') {
+                document.querySelector('.toggle-btn:first-child').classList.add('active');
+                document.getElementById('vote-section').classList.add('active');
+            } else {
+                document.querySelector('.toggle-btn:last-child').classList.add('active');
+                document.getElementById('results-section').classList.add('active');
+                loadResults();
+            }
+        }
+
+        // Initialize on load
+        initializeVoting();
+    </script>
+</body>
+</html>
