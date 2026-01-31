@@ -725,8 +725,8 @@
         async function submitVote() {
             try {
                 // Check if Google Sheets URL is configured
-                if (GOOGLE_SHEET_URL === 'https://script.google.com/macros/s/AKfycbwnuw4AqkwTii_KDA4XIGpRX4brFOo_YG43gulmglWlB2_Q-T0KbJMlHSi2zX7r0dhp/exec') {
-                    alert('Google Sheets integration not configured yet. Please add your Web App URL to the code.');
+               if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes('REPLACE_ME')) {
+                    alert('Google Sheets integration not configured yet.');
                     return;
                 }
 
