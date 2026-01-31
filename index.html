@@ -7,15 +7,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0f0e0d;
-            --surface: #1a1816;
-            --surface-elevated: #252220;
-            --text: #e8e6e3;
-            --text-dim: #9a9490;
-            --accent: #ff6b35;
-            --accent-dim: #c44d23;
-            --border: #3a3633;
-            --success: #4caf50;
+            --bg: #f7f4ed;
+            --surface: #ffffff;
+            --surface-elevated: #fefdfb;
+            --text: #2c3e50;
+            --text-dim: #7f8c8d;
+            --accent: #e67e22;
+            --accent-dim: #d35400;
+            --border: #dfe6e9;
+            --success: #27ae60;
+            --ocean: #3498db;
+            --ocean-dark: #2980b9;
+            --sand: #f39c12;
+            --terracotta: #e74c3c;
         }
 
         * {
@@ -26,11 +30,32 @@
 
         body {
             font-family: 'IBM Plex Mono', monospace;
-            background: var(--bg);
+            background: linear-gradient(135deg, #89c4f4 0%, #b8e0f6 30%, #f7f4ed 60%, #ffeaa7 100%);
+            background-attachment: fixed;
             color: var(--text);
             min-height: 100vh;
             padding: 2rem;
             overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(52, 152, 219, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(243, 156, 18, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
         }
 
         .container {
@@ -42,13 +67,25 @@
             text-align: center;
             margin-bottom: 4rem;
             animation: fadeInDown 0.8s ease-out;
+            position: relative;
+        }
+
+        header::after {
+            content: '🌊';
+            display: block;
+            font-size: 2rem;
+            margin-top: 1rem;
+            opacity: 0.6;
         }
 
         h1 {
             font-family: 'Playfair Display', serif;
             font-size: clamp(2.5rem, 8vw, 5rem);
             font-weight: 900;
-            color: var(--text);
+            background: linear-gradient(135deg, var(--ocean-dark), var(--ocean), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             letter-spacing: -0.02em;
             margin-bottom: 0.5rem;
             line-height: 1;
@@ -56,7 +93,7 @@
 
         .subtitle {
             font-size: 0.875rem;
-            color: var(--text-dim);
+            color: var(--ocean-dark);
             letter-spacing: 0.1em;
             text-transform: uppercase;
         }
@@ -81,18 +118,20 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
             font-weight: 600;
+            border-radius: 4px;
         }
 
         .toggle-btn:hover {
-            border-color: var(--accent);
-            color: var(--text);
+            border-color: var(--ocean);
+            color: var(--ocean-dark);
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
         }
 
         .toggle-btn.active {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: var(--bg);
+            background: linear-gradient(135deg, var(--ocean), var(--ocean-dark));
+            border-color: var(--ocean-dark);
+            color: white;
         }
 
         .section {
@@ -111,6 +150,8 @@
             margin-bottom: 2rem;
             position: relative;
             animation: slideUp 0.6s ease-out 0.3s both;
+            box-shadow: 0 10px 40px rgba(52, 152, 219, 0.1);
+            border-radius: 4px;
         }
 
         .voting-area::before {
@@ -119,8 +160,9 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--accent), var(--accent-dim));
+            height: 6px;
+            background: linear-gradient(90deg, var(--ocean), var(--ocean-dark), var(--accent), var(--sand));
+            border-radius: 4px 4px 0 0;
         }
 
         h2 {
@@ -154,17 +196,22 @@
             gap: 1rem;
             transition: all 0.3s ease;
             position: relative;
+            border-radius: 4px;
         }
 
         .rank-item:hover {
-            border-color: var(--accent);
+            border-color: var(--ocean);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);
         }
 
         .rank-number {
             font-family: 'Playfair Display', serif;
             font-size: 2.5rem;
             font-weight: 900;
-            color: var(--accent);
+            background: linear-gradient(135deg, var(--ocean), var(--ocean-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             min-width: 50px;
             text-align: center;
             line-height: 1;
@@ -196,7 +243,7 @@
             font-family: 'Playfair Display', serif;
             font-size: 1.25rem;
             font-weight: 700;
-            color: var(--accent);
+            color: var(--terracotta);
         }
 
         .option-link {
@@ -212,7 +259,7 @@
         }
 
         .option-link:hover {
-            color: var(--accent);
+            color: var(--ocean);
         }
 
         .pros-cons-container {
@@ -241,7 +288,7 @@
         }
 
         .cons-section .section-label {
-            color: var(--accent);
+            color: var(--terracotta);
         }
 
         .pros-list, .cons-list {
@@ -273,7 +320,7 @@
             content: '✗';
             position: absolute;
             left: 0;
-            color: var(--accent);
+            color: var(--terracotta);
             font-weight: 600;
         }
 
@@ -287,7 +334,7 @@
         .rank-btn {
             background: var(--surface);
             border: 2px solid var(--border);
-            color: var(--text);
+            color: var(--ocean);
             width: 36px;
             height: 36px;
             display: flex;
@@ -297,12 +344,13 @@
             transition: all 0.3s ease;
             font-size: 1.25rem;
             font-weight: bold;
+            border-radius: 4px;
         }
 
         .rank-btn:hover:not(:disabled) {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: var(--bg);
+            background: linear-gradient(135deg, var(--ocean), var(--ocean-dark));
+            border-color: var(--ocean-dark);
+            color: white;
             transform: scale(1.1);
         }
 
@@ -312,9 +360,9 @@
         }
 
         .submit-btn {
-            background: var(--accent);
+            background: linear-gradient(135deg, var(--ocean), var(--ocean-dark));
             border: none;
-            color: var(--bg);
+            color: white;
             padding: 1rem 3rem;
             font-family: 'IBM Plex Mono', monospace;
             font-size: 1rem;
@@ -324,12 +372,13 @@
             text-transform: uppercase;
             letter-spacing: 0.1em;
             width: 100%;
+            border-radius: 4px;
         }
 
         .submit-btn:hover {
-            background: var(--text);
+            background: linear-gradient(135deg, var(--ocean-dark), var(--ocean));
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(255, 107, 53, 0.3);
+            box-shadow: 0 8px 24px rgba(52, 152, 219, 0.3);
         }
 
         .submit-btn:disabled {
@@ -349,6 +398,7 @@
             border: 2px solid var(--border);
             padding: 1.5rem;
             animation: slideUp 0.6s ease-out both;
+            border-radius: 4px;
         }
 
         .result-item:nth-child(1) { animation-delay: 0.1s; }
@@ -375,7 +425,10 @@
             font-family: 'Playfair Display', serif;
             font-size: 2rem;
             font-weight: 900;
-            color: var(--accent);
+            background: linear-gradient(135deg, var(--ocean), var(--ocean-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .result-bar-container {
@@ -384,11 +437,12 @@
             border: 1px solid var(--border);
             overflow: hidden;
             margin-bottom: 0.5rem;
+            border-radius: 6px;
         }
 
         .result-bar {
             height: 100%;
-            background: linear-gradient(90deg, var(--accent), var(--accent-dim));
+            background: linear-gradient(90deg, var(--ocean), var(--ocean-dark), var(--sand));
             transition: width 1s ease-out;
         }
 
@@ -526,7 +580,7 @@
     <script>
         // ===== CONFIGURATION =====
         // IMPORTANT: Replace this with your Google Apps Script Web App URL
-        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwnuw4AqkwTii_KDA4XIGpRX4brFOo_YG43gulmglWlB2_Q-T0KbJMlHSi2zX7r0dhp/exec';
+        const GOOGLE_SHEET_URL = 'PASTE_YOUR_WEB_APP_URL_HERE';
         // ========================
         
         const options = [
